@@ -10,11 +10,25 @@ from . import util
 def index(request):
     if request.method == 'POST':
         search_field = request.POST.get('search_field')
+        all_entries = util.list_entries()
+        search_results = []
 
-        
+        for e in all_entries:
+            if e.lower() == search_field.lower():
+                return HttpResponseRedirect(reverse("entry", args = [search_field]))
+            else:
+                if search_field.lower() in e.lower():
+                    search_results.append(e)
 
-        return redirect(reverse("entry", args = [search_field]))
-    else:
+        if len(search_results) != 0:
+            return render(request, "encyclopedia/search_results.html", {
+                "search_results": search_results,
+                "search_field": search_field
+            })
+        else:
+            return HttpResponseRedirect(reverse("entry", args = [search_field]))
+
+    else: 
         return render(request, "encyclopedia/index.html", {
             "entries": util.list_entries()
         })
