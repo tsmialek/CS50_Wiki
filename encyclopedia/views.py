@@ -4,7 +4,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect
 import html
 
-from . import util
+from . import util, forms
 
 
 def index(request):
@@ -37,10 +37,18 @@ def entry(request, entry):
     entryContent = util.github_markup_to_html(util.get_entry(entry))
     if entryContent is None:
         return render(request, "encyclopedia/error.html", {
-            "entryName": entry.capitalize()
+            "entryName": entry.capitalize(),
+            "errorMessage": f"Couldn't find nothing about: {entry} entry" 
         })
 
     return render(request, "encyclopedia/entry.html", {
         "entryName": entry.capitalize(),
-        "entryContent": entryContent
+        "entryContent": entryContent,
+    })
+
+
+#adding page -------------
+def add_page(request):
+    return render(request, "encyclopedia/add_page.html", {
+        "entry_form": forms.NewEntryForm()
     })
