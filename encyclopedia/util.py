@@ -1,3 +1,6 @@
+import markdown
+import requests
+import html
 import re
 
 from django.core.files.base import ContentFile
@@ -34,4 +37,11 @@ def get_entry(title):
         f = default_storage.open(f"entries/{title}.md")
         return f.read().decode("utf-8")
     except FileNotFoundError:
+        return None
+
+def github_markup_to_html(markup):
+    response = requests.post('https://api.github.com/markdown', json = {'text':markup})
+    if response.ok:
+        return response.content.decode('utf-8')
+    else:
         return None
