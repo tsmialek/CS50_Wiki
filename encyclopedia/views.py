@@ -2,8 +2,10 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect
+from fuzzywuzzy import fuzz
 import html
-
+import io, os
+from django import forms
 from . import util, forms
 
 
@@ -17,7 +19,7 @@ def index(request):
             if e.lower() == search_field.lower():
                 return HttpResponseRedirect(reverse("entry", args = [search_field]))
             else:
-                if search_field.lower() in e.lower():
+                if fuzz.ratio(e.lower(), search_field.lower()) > 50:
                     search_results.append(e)
 
         if len(search_results) != 0:
@@ -37,7 +39,6 @@ def entry(request, entry):
     entryContent = util.github_markup_to_html(util.get_entry(entry))
     if entryContent is None:
         return render(request, "encyclopedia/error.html", {
-            "entryName": entry.capitalize(),
             "errorMessage": f"Couldn't find nothing about: {entry} entry" 
         })
 
@@ -49,6 +50,27 @@ def entry(request, entry):
 
 #adding page -------------
 def add_page(request):
+    if request.method == 'POST':
+        form = forms.NewEntryForm(request.POST)
+        if form.is_valid():
+            title = form.cleaned_data['title']
+            content = form.cleaned_data['content']
+            if not os.path.exists(f'entries/{title.capitalize()}.md'):
+                with io.open(f'entries/{title}.md', 'w', encoding='utf-8') as entry:
+                    entry.write(content)
+            else: 
+                return render(request, "encyclopedia/error.html", {
+                    'errorMessage': f'Entry with this title already exists'
+                })
     return render(request, "encyclopedia/add_page.html", {
-        "entry_form": forms.NewEntryForm()
+        "entry_form": forms.NewEntryForm(),
+        "action": "Add"
+    })
+
+def edit_page(request, entry):
+    form = forms.NewEntryForm(initial={'title': entry, 'content': util.get_entry(entry)})
+    return render(request, "encyclopedia/add_page.html", {
+        'entry_form': form,
+        'action': 'Edit',
+        'edit_switch': 1
     })

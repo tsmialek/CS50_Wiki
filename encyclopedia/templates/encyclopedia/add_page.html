@@ -6,7 +6,7 @@ Add wikipedia entry
 
 {% block body %}
 
-<h1>Add your own wikipedia page: </h1>
+<h1>{{action}} wikipedia page: </h1>
 
 <form action="{% url 'add_page' %}" method="post">
     {% csrf_token %}
