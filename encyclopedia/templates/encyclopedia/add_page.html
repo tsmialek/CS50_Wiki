@@ -8,7 +8,12 @@ Add wikipedia entry
 
 <h1>{{action}} wikipedia page: </h1>
 
+{% if action == 'Edit' %}
+<form action="{% url 'edit_page' entry%}" method="post">
+{% else %}
 <form action="{% url 'add_page' %}" method="post">
+{% endif %}
+
     {% csrf_token %}
     {{ entry_form.as_p}}
     <input type="submit" value="Save entry">

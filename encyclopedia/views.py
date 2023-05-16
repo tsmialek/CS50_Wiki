@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponseRedirect
 from fuzzywuzzy import fuzz
 import html
+import random
 import io, os
 from django import forms
 from . import util, forms
@@ -68,9 +69,27 @@ def add_page(request):
     })
 
 def edit_page(request, entry):
+    if request.method == 'POST':
+        form = forms.NewEntryForm(request.POST)
+        if form.is_valid():
+            content = form.cleaned_data['content']
+            with io.open(f'entries/{entry}.md', 'w', encoding='utf-8') as entryFile:
+                entryFile.write(content)
+            
+            return HttpResponseRedirect(reverse("entry", args = [entry]))
+        else:
+            return render(request, 'encyclopedia/error.html', {
+                'errorMessage': f'Unable to modify that entry. Make sure you provided correct input'
+            })
+
     form = forms.NewEntryForm(initial={'title': entry, 'content': util.get_entry(entry)})
+    form.fields['title'].widget.attrs['readonly'] = True
     return render(request, "encyclopedia/add_page.html", {
         'entry_form': form,
         'action': 'Edit',
-        'edit_switch': 1
+        'entry' : entry
     })
+
+def random_page(request):
+    list_of_entries = util.list_entries()
+    return HttpResponseRedirect(reverse("entry", args = [random.choice(list_of_entries)]))
